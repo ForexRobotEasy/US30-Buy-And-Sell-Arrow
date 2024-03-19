@@ -1,0 +1,63 @@
+mql5
+//+------------------------------------------------------------------+
+//|                                              US30 Buy And Sell Arrow |
+//|                                      Developed by Forex Robot Easy Team |
+//|                                          Website: forexroboteasy.com |
+//+------------------------------------------------------------------+
+
+// Indicator input parameters
+input int Timeframe = 0; // Timeframe selection (0 = current timeframe)
+input string SoundFile = 'alert.wav'; // Sound file for alerts
+
+// Global variables
+bool BuySignal = false; // Buy signal flag
+bool SellSignal = false; // Sell signal flag
+
+//+------------------------------------------------------------------+
+//| Custom indicator initialization function                         |
+//+------------------------------------------------------------------+
+int OnInit()
+{
+    IndicatorShortName('US30 Buy/Sell Arrow');
+    SetIndexStyle(0, DRAW_ARROW);
+    SetIndexArrow(0, SYMBOL_ARROWUP);
+    SetIndexBuffer(0, BuySignal);
+    SetIndexStyle(1, DRAW_ARROW);
+    SetIndexArrow(1, SYMBOL_ARROWDOWN);
+    SetIndexBuffer(1, SellSignal);
+    return(INIT_SUCCEEDED);
+}
+
+//+------------------------------------------------------------------+
+//| Custom indicator iteration function                              |
+//+------------------------------------------------------------------+
+int OnCalculate(const int rates_total, const int prev_calculated, const datetime& time[], const double& open[], const double& high[], const double& low[], const double& close[], const long& tick_volume[], const long& volume[], const int& spread[])
+{
+    int limit = rates_total - prev_calculated;
+
+    for (int i = 0; i < limit; i++)
+    {
+        double overboughtLevel = 70; // Overbought level
+        double oversoldLevel = 30; // Oversold level
+        
+        // Check for overbought condition
+        if (iRSI(NULL, Timeframe, 14, PRICE_CLOSE, i) > overboughtLevel)
+        {
+            BuySignal[i] = false;
+            SellSignal[i] = true;
+        }
+        
+        // Check for oversold condition
+        if (iRSI(NULL, Timeframe, 14, PRICE_CLOSE, i) < oversoldLevel)
+        {
+            BuySignal[i] = true;
+            SellSignal[i] = false;
+        }
+        
+        // Play sound alert if a signal is generated
+        if (BuySignal[i] || SellSignal[i])
+            PlaySound(SoundFile);
+    }
+
+    return(rates_total);
+}
